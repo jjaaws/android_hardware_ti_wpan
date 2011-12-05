@@ -691,8 +691,8 @@ int main(int argc, char *argv[])
 	}
 #else  /* if ANDROID */
 
-	if (0 == lstat("/st_drv.ko", &file_stat)) {
-		if (insmod("/st_drv.ko", "") < 0) {
+	if (0 == lstat("/system/lib/modules/st_drv.ko", &file_stat)) {
+		if (insmod("/system/lib/modules/st_drv.ko", "") < 0) {
 			UIM_ERR(" Error inserting st_drv module");
 			return -1;
 		} else {
@@ -707,8 +707,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (0 == lstat("/btwilink.ko", &file_stat)) {
-		if (insmod("/btwilink.ko", "") < 0) {
+	if (0 == lstat("/system/lib/modules/btwilink.ko", &file_stat)) {
+		if (insmod("/system/lib/modules/btwilink.ko", "") < 0) {
 			UIM_ERR(" Error inserting btwilink module, NO BT? ");
 		} else {
 			UIM_DBG(" Inserted btwilink module");
@@ -718,8 +718,8 @@ int main(int argc, char *argv[])
 		UIM_DBG("BT driver built into the kernel ?");
 	}
 
-	if (0 == lstat("/fm_drv.ko", &file_stat)) {
-		if (insmod("/fm_drv.ko", "") < 0) {
+	if (0 == lstat("/system/lib/modules/fm_drv.ko", &file_stat)) {
+		if (insmod("/system/lib/modules/fm_drv.ko", "") < 0) {
 			UIM_ERR(" Error inserting fm_drv module, NO FM? ");
 		} else {
 			UIM_DBG(" Inserted fm_drv module");
@@ -729,8 +729,8 @@ int main(int argc, char *argv[])
 		UIM_DBG("FM driver built into the kernel ?");
 	}
 
-	if (0 == lstat("/gps_drv.ko", &file_stat)) {
-		if (insmod("/gps_drv.ko", "") < 0) {
+	if (0 == lstat("/system/lib/modules/gps_drv.ko", &file_stat)) {
+		if (insmod("/system/lib/modules/gps_drv.ko", "") < 0) {
 			UIM_ERR(" Error inserting gps_drv module, NO GPS? ");
 		} else {
 			UIM_DBG(" Inserted gps_drv module");
@@ -740,8 +740,8 @@ int main(int argc, char *argv[])
 		UIM_DBG("GPS driver built into the kernel ?");
 	}
 
-	if (0 == lstat("/fm_v4l2_drv.ko", &file_stat)) {
-		if (insmod("/fm_v4l2_drv.ko", "") < 0) {
+	if (0 == lstat("/system/lib/modules/fm_v4l2_drv.ko", &file_stat)) {
+		if (insmod("/system/lib/modules/fm_v4l2_drv.ko", "") < 0) {
 			UIM_ERR(" Error inserting fm_v4l2_drv module, NO FM? ");
 		} else {
 			UIM_DBG(" Inserted fm_v4l2_drv module");
