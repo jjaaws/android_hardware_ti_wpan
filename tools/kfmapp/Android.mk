@@ -1,3 +1,4 @@
+ifneq ($(TARGET_BUILD_PDK), true)
 LOCAL_PATH := $(call my-dir)
 TINYALSA_PATH := external/tinyalsa/
 
@@ -33,4 +34,5 @@ LOCAL_MODULE:=kfmapp
 include $(BUILD_EXECUTABLE)
 
 endif # BUILD_FMAPP_
+endif #!PDK
 

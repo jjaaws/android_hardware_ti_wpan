@@ -15,6 +15,7 @@
 #  limitations under the License.
 #
 #TO Check whether we need any flags to enable FM
+ifneq ($(TARGET_BUILD_PDK), true)
 #ifeq ($(CFG_FM_SERVICE_TI),yes)
   include hardware/ti/wpan/tools/FM/FmRxApp/Android.mk
   include hardware/ti/wpan/tools/FM/FmTxApp/Android.mk
@@ -22,3 +23,4 @@
   include hardware/ti/wpan/tools/FM/FmRadioIf/Android.mk
   include hardware/ti/wpan/tools/FM/service/src/jni/Android.mk
 #endif
+endif #!PDK
