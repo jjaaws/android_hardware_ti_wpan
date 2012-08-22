@@ -1231,60 +1231,289 @@ int fmapp_get_rds_onoff(void)
 void fmapp_rds_decode(int blkno, int byte1, int byte2)
 {
     static char rds_psn[9];
+    static char rds_ptyn[9];
     static char rds_txt[65];
+    static char rds_eon_ps_on[9];
+    static char rds_ews[5];
     static int  rds_pty,ms_code;
     static int group,spare,blkc_byte1,blkc_byte2;
+    static int MGS_U,MGS_I,MGS_N,MGS_R,AFI,LTN,X4,X3,X2X0, CI, DP, Extent, Dir;
+    static int variant_code, C0,PTYN_1,PTYN_2,PTYN_3,PTYN_4,PTYN_5,PTYN_6,PTYN_7,PTYN_8;
+    static int EON_VC;
 
     switch (blkno) {
-    case 0: /* Block A */
-        printf("----------------------------------------\n");
-        printf("block A - id=%d\n",(byte1 << 8) | byte2);
-    break;
-    case 1: /* Block B */
-    printf("block B - group=%d%c tp=%d pty=%d spare=%d\n",
-            (byte1 >> 4) & 0x0f,
-            ((byte1 >> 3) & 0x01) + 'A',
-            (byte1 >> 2) & 0x01,
-            ((byte1 << 3) & 0x18) | ((byte2 >> 5) & 0x07),
-            byte2 & 0x1f);
-    group = (byte1 >> 3) & 0x1f;
-    spare = byte2 & 0x1f;
-    rds_pty = ((byte1 << 3) & 0x18) | ((byte2 >> 5) & 0x07);
-        ms_code = (byte2 >> 3)& 0x1;
-    break;
-    case 2: /* Block C */
-        printf("block C - 0x%02x 0x%02x\n",byte1,byte2);
-    blkc_byte1 = byte1;
-    blkc_byte2 = byte2;
-    break;
-    case 3 : /* Block D */
-    printf("block D - 0x%02x 0x%02x\n",byte1,byte2);
-    switch (group) {
-    case 0: /* Group 0A */
-        rds_psn[2*(spare & 0x03)+0] = byte1;
-        rds_psn[2*(spare & 0x03)+1] = byte2;
-        if ((spare & 0x03) == 0x03)
-            printf("PSN: %s, PTY: %s, MS: %s\n",rds_psn,
-                            pty_str[rds_pty],ms_code?"Music":"Speech");
-        break;
-    case 4: /* Group 2A */
-        rds_txt[4*(spare & 0x0f)+0] = blkc_byte1;
-        rds_txt[4*(spare & 0x0f)+1] = blkc_byte2;
-        rds_txt[4*(spare & 0x0f)+2] = byte1;
-        rds_txt[4*(spare & 0x0f)+3] = byte2;
-            /* Display radio text once we get 16 characters */
-//        if ((spare & 0x0f) == 0x0f)
-        if (spare > 16)
-            {
-            printf("Radio Text: %s\n",rds_txt);
-//              memset(&rds_txt,0,sizeof(rds_txt));
+        case 0: /* Block 1 */
+            printf("----------------------------------------\n");
+            printf("block A - PI-CODE = %d\n",(byte1 << 8) | byte2);
+            break;
+        case 1: /* Block 2 */
+            printf("block B - GROUP=%d%c TP=%d PTY=%d SPARE=%d\n",
+                    (byte1 >> 4) & 0x0f,
+                    ((byte1 >> 3) & 0x01) + 'A',
+                    (byte1 >> 2) & 0x01,
+                    ((byte1 << 3) & 0x18) | ((byte2 >> 5) & 0x07),
+                    byte2 & 0x1f);
+            group = (byte1 >> 3) & 0x1f;
+            spare = byte2 & 0x1f;
+            rds_pty = ((byte1 << 3) & 0x18) | ((byte2 >> 5) & 0x07);
+            ms_code = (byte2 >> 3)& 0x1;
+            switch(group) {
+                case 8: /* 8A Group */
+                    X4 = (byte2 >> 4) & 0x01;
+                    X3 = (byte2 >> 3) & 0x01;
+                    X2X0 = (byte2 & 0x07);
+
+                    if(X3 == 0)
+                        CI = X2X0;
+                    else if(X3 == 1)
+                        DP = X2X0;
+                    break;
+                case 0: /* 0A Group */
+                    printf("TA = %d, MS = %d, DI=%d C1 =%d, C0=%d\n",
+                            (byte2 >> 4 & 0x01), (byte2 >> 3 & 0x01),
+                            (byte2 >> 2 & 0x01), (byte2 >> 1 & 0x01),
+                            (byte2 & 0x01));
+                    break;
+                case 1: /* 0B Group */
+                    printf("TA = %d, MS = %d, DI=%d C1 =%d, C0=%d\n",
+                            (byte2 >> 4 & 0x01), (byte2 >> 3 & 0x01),
+                            (byte2 >> 2 & 0x01), (byte2 >> 1 & 0x01),
+                            (byte2 & 0x01));
+                    break;
+                case 31: /* 15B Group */
+                    printf("TA = %d, MS = %d, DI=%d C1 =%d, C0=%d\n",
+                            (byte2 >> 4 & 0x01), (byte2 >> 3 & 0x01),
+                            (byte2 >> 2 & 0x01), (byte2 >> 1 & 0x01),
+                            (byte2 & 0x01));
+                    break;
+                case 20: /* 10A Group */
+                    C0 = (byte2 & 0x01);
+                    break;
+                case 28: /* 14A Group */
+                    EON_VC = (byte2 & 0x0F);
+                    printf("EON: TP (Other Network) = %d\n", (byte2 >> 4) & 0x01);
+                    break;
+                case 18: /* 9A Group */
+                    rds_ews[0] = (byte2 & 0x1F);
+                    break;
+                default:
+                    break;
             }
-        break;
-         }
-         printf("----------------------------------------\n");
-         break;
-     default:
-         printf("unknown block [%d]\n",blkno);
+            break;
+        case 2: /* Block 3 */
+#ifdef DEBUG
+            printf("block C - 0x%02x 0x%02x\n",byte1,byte2);
+#endif
+            blkc_byte1 = byte1;
+            blkc_byte2 = byte2;
+            switch (group) {
+                case 2: /* Group 1A */
+                    variant_code = ((byte1 >> 4) & 0x07);
+
+                    if(variant_code == 0) {
+                        /* Paging and ECC available */
+                        printf("ECC = %02x\n", byte2);
+                    }
+                    break;
+                case 3: /* Group 3A */
+                    if(((byte1 >> 6) & 0x01) == 0) {
+                        /* Variant code - 00, for TMC */
+                        MGS_U = (byte2 & 0x01);
+                        MGS_R = ((byte2 >> 1) & 0x01);
+                        MGS_N = ((byte2 >> 2) & 0x01);
+                        MGS_I = ((byte2 >> 3) & 0x01);
+                        AFI = ((byte2 >> 5) & 0x01);
+                        LTN = ((byte1 & 0x0f) + ((byte2 >> 6) & 0x03));
+
+                        printf("---- LTN ID = %d\n", LTN);
+                        printf("---- Traffic Information: ");
+                        if(MGS_I)
+                            printf("International ");
+                        else if(MGS_N)
+                            printf("National ");
+                        else if(MGS_R)
+                            printf("Regional ");
+                        else if(MGS_U)
+                            printf("Urban ");
+
+                        printf("\n");
+                        break;
+                    }
+                case 8: /* Group 8A Event block */
+#ifdef DEBUG
+                    printf("---- TMC Event\n");
+#endif
+                    if(X4 == 0) {
+                        Dir = (byte1 >> 6) & 0x01;
+                        Extent = (byte1 >> 3) & 0x07;
+                        if(X3 == 1) {
+                            printf("---- Single Group TMC\n");
+                            printf("---- Event - %d \n", (((byte1 & 0x07) << 8) + byte2));
+                        } else if (X3 == 0) {
+#ifdef DEBUG
+                            /* TBD: Need to parse Multi Group TMC data */
+                            printf("---- Multiple Group TMC Event\n");
+#endif
+                        }
+                    } else {
+#ifdef DEBUG
+                        printf("---- This 8A group which has tuning information\n");
+
+#endif
+                        break;
+                    }
+                case 20: /* Group 10A */
+                    if(C0 == 0) {
+                        rds_ptyn[0] = byte1;
+                        rds_ptyn[1] = byte2;
+                        PTYN_1 = byte1;
+                        PTYN_2 = byte2;
+                    }else if(C0 == 1) {
+                        rds_ptyn[4] = byte1;
+                        rds_ptyn[5] = byte2;
+                        PTYN_5 = byte1;
+                        PTYN_6 = byte2;
+                    }
+                    break;
+                case 28: /* Group 14A */
+                    switch(EON_VC) {
+                        case 0:
+                            rds_eon_ps_on[0] = byte1;
+                            rds_eon_ps_on[1] = byte2;
+                            break;
+                        case 1:
+                            rds_eon_ps_on[2] = byte1;
+                            rds_eon_ps_on[3] = byte2;
+                            break;
+                        case 2:
+                            rds_eon_ps_on[4] = byte1;
+                            rds_eon_ps_on[5] = byte2;
+                            break;
+                        case 3:
+                            rds_eon_ps_on[6] = byte1;
+                            rds_eon_ps_on[7] = byte2;
+                            rds_eon_ps_on[8] = '\n';
+                            printf("EON: PS (Other network) = %s\n",rds_eon_ps_on);
+                            break;
+                        case 4:
+                            printf("EON: AF1 (ON) - AF2 (ON) (Method1)\n", byte1,byte2);
+                            break;
+                        case 5:
+                            printf("EON: Tuning Freq = %d -- Mapped Freq1 (ON) = %d\n", byte1,byte2);
+                            break;
+                        case 6:
+                            printf("EON: Tuning Freq = %d -- Mapped Freq2 (ON) = %d\n", byte1,byte2);
+                            break;
+                        case 7:
+                            printf("EON: Tuning Freq = %d -- Mapped Freq3 (ON) = %d\n", byte1,byte2);
+                            break;
+                        case 8:
+                            printf("EON: Tuning Freq = %d -- Mapped Freq4 (ON) = %d\n", byte1,byte2);
+                            break;
+                        case 9:
+                            printf("EON: Tuning Freq = %d -- Mapped Freq5 (ON) = %d\n", byte1,byte2);
+                            break;
+                        case 13:
+                            printf("EON: PTY(ON) = %d -- TA(ON) = %d\n", ((byte1 >> 3) & 0x1F), (byte2 & 0x01));
+                            break;
+                        case 14:
+                            printf("EON: PIN (ON) -- Day = %d, Hour = %d, Minute = %d\n",
+                                    ((byte1 >> 3) & 0x1F), ((byte1 & 0x7) |
+                                        ((byte2 >> 6) & 0x03)), (byte2 & 0x3F));
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case 18: /* 9A Group */
+                    rds_ews[1] = byte1;
+                    rds_ews[2] = byte2;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 3 : /* Block 4 */
+#ifdef DEBUG
+            printf("block D - 0x%02x 0x%02x\n",byte1,byte2);
+#endif
+            switch (group) {
+                case 0: /* Group 0A */
+                    rds_psn[2*(spare & 0x03)+0] = byte1;
+                    rds_psn[2*(spare & 0x03)+1] = byte2;
+                    if ((spare & 0x03) == 0x03)
+                        printf("PSN: %s, PTY: %s, MS: %s\n",rds_psn,
+                                pty_str[rds_pty],ms_code?"Music":"Speech");
+                    break;
+                case 2: /* Group 1A */
+                    printf("PIN: Day= %d, Hour=%d and Minute=%d\n",
+                            ((byte1 >> 3) & 0x1F), ((byte1 & 0x7) |
+                                ((byte2 >> 6) & 0x03)), (byte2 & 0x3F));
+                    break;
+                case 4: /* Group 2A */
+                    rds_txt[4*(spare & 0x0f)+0] = blkc_byte1;
+                    rds_txt[4*(spare & 0x0f)+1] = blkc_byte2;
+                    rds_txt[4*(spare & 0x0f)+2] = byte1;
+                    rds_txt[4*(spare & 0x0f)+3] = byte2;
+                    /* Display radio text once we get 16 characters */
+
+                    if (spare > 16)
+                    {
+                        printf("Radio Text: %s\n",rds_txt);
+                        memset(&rds_txt,0,sizeof(rds_txt));
+                    }
+                    break;
+                case 8: /* Group 8A */
+                    printf("---- TMC Location Data\n");
+                    if(X4 == 0) {
+                        if(X3 == 1) {
+                            printf("---- Single Group TMC\n");
+                            printf("---- Location - %d \n", ((byte1 << 8) + byte2));
+                        } else if (X3 == 0) {
+#ifdef DEBUG
+                            /* TBD: Need to parse Multigroup TMC Data */
+                            printf("---- Multiple group TMC Location Data\n");
+#endif
+                        }
+                    } else {
+#ifdef DEBUG
+                        printf("---- This 8A group has tuning information\n");
+#endif
+                    }
+            }
+#ifdef DEBUG
+            printf("----------------------------------------\n");
+#endif
+            break;
+        case 20: /* Group 10A */
+            if(C0 == 0) {
+                rds_ptyn[2] = byte1;
+                rds_ptyn[3] = byte2;
+                PTYN_3 = byte1;
+                PTYN_4 = byte2;
+            } else if(C0 == 1) {
+                rds_ptyn[6] = byte1;
+                rds_ptyn[7] = byte2;
+                rds_ptyn[8] = '\n';
+
+                PTYN_7 = byte1;
+                PTYN_8 = byte2;
+                printf("PTYN = %s\n",rds_ptyn);
+            }
+            break;
+        case 18: /* 9A Group */
+            rds_ews[3] = byte1;
+            rds_ews[4] = byte2;
+
+            /* Format and application of EWS data will be
+             * differ depending on country, So just print
+             * out the raw EWS data
+             */
+            printf("EWS: B1 = %x, B2=%x, B3=%x,B4=%x,B5=%x\n",
+                    rds_ews[0],rds_ews[1],rds_ews[2],rds_ews[3],rds_ews[4]);
+            break;
+        default:
+            printf("unknown block [%d]\n",blkno);
     }
 }
 void *rds_thread(void *data)
@@ -1300,24 +1529,25 @@ void *rds_thread(void *data)
   {
     while(1){
         memset(&pfd, 0, sizeof(pfd));
+
         pfd.fd = radio_fd;
-        pfd.events = POLLIN;
-        ret = poll(&pfd, 1, 10);
-        if (ret == 0){
-            /* Break the poll after RDS data available */
+        pfd.events = POLLPRI | POLLIN | POLLRDNORM;
+        ret = poll(&pfd, 1, 1000);
+        if ((pfd.revents == (POLLPRI | POLLIN)) || (pfd.revents == (POLLIN | POLLRDNORM))){
+            printf("Breaking Poll as RDS data is ready to be read\n");
             break;
         }
     }
 
-    ret = read(radio_fd,buf,500);
-    if(ret < 0) {
-
-       break;
-    }
-    else if( ret > 0)
-    {
-       for(index=0;index<ret;index+=3)
-         fmapp_rds_decode(buf[index+2] & 0x7,buf[index+1],buf[index]);
+    if (pfd.revents == (POLLIN | POLLRDNORM)) {
+        ret = read(radio_fd,buf,500);
+        if(ret < 0)
+            break;
+        else if( ret > 0)
+        {
+             for(index=0;index<ret;index+=3)
+             fmapp_rds_decode(buf[index+2] & 0x7,buf[index+1],buf[index]);
+        }
     }
   }
 /* TODO: Need to conform thread termination.
