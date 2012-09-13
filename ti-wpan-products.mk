@@ -12,3 +12,17 @@ PRODUCT_PACKAGES += uim-sysfs \
         fmradioif \
         com.ti.fm.fmradioif.xml \
 	ti-wpan-fw
+
+#NFC
+PRODUCT_PACKAGES += \
+    libnfc \
+    libnfc_ndef \
+    libnfc_jni \
+    Nfc \
+    NFCDemo \
+    Tag \
+    TagTests \
+    TagCanon \
+    AndroidBeamDemo \
+    NfcExtrasTests \
+    com.android.nfc_extras
