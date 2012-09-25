@@ -26,3 +26,8 @@ PRODUCT_PACKAGES += \
     AndroidBeamDemo \
     NfcExtrasTests \
     com.android.nfc_extras
+
+#copy firmware
+    PRODUCT_COPY_FILES += \
+       system/bluetooth/data/main.conf:system/etc/bluetooth/main.conf
+
