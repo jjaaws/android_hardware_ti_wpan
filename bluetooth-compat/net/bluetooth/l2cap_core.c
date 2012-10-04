@@ -295,10 +295,10 @@ void l2cap_chan_destroy(struct l2cap_chan *chan)
 	write_lock(&chan_list_lock);
 /*	if (atomic_read(&chan->refcnt) == 1) {*/
 	if (test_and_set_bit(CONF_CHAN_DESTROYED, &chan->conf_state) == 0) {
-		BT_INFO(">>>>>>> l2cap_chan_destroy calling list_del on chan %X",chan);
+		BT_DBG(">>>>>>> l2cap_chan_destroy calling list_del on chan %X",chan);
 		list_del(&chan->global_l);
 	} else {
-		BT_INFO(">>>>>>> l2cap_chan_destroy skipping list_del on chan %X",chan);
+		BT_DBG(">>>>>>> l2cap_chan_destroy skipping list_del on chan %X",chan);
 	}
 	write_unlock(&chan_list_lock);
 
