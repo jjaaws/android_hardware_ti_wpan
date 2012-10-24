@@ -43,7 +43,17 @@
 #include <bluetooth/hci_lib.h>
 #include <bluetooth/sco.h>
 
+#define SCO_CODING_FORMAT  0x03
+
+#define CODING_FORMAT_CVSD 2
+#define CODING_FORMAT_mSBC 5
+
 /* Static Local variables */
+
+/* Coding format HFP 1.5- CVSD; HFP 1.6=CVSD/mSBC*/
+static int coding_format = CODING_FORMAT_CVSD;
+
+static int flag = 0;
 
 /* BD Address of the BT head set */
 static bdaddr_t bdaddr;
@@ -99,6 +109,14 @@ static int do_connect(char *svr)
 							strerror(errno), errno);
 		goto error;
 	}
+
+       if (flag == 1) {
+           if (setsockopt(sk, SOL_SCO, SCO_CODING_FORMAT, &coding_format, sizeof(coding_format))) {
+		syslog(LOG_ERR, "setsockopt(SCO_CODING_FORMAT) failed: %s (%d)",
+                                                        strerror(errno), errno);
+                goto error;
+           }
+       }
 
 	/* Connect to remote device */
 	memset(&addr, 0, sizeof(addr));
@@ -225,9 +243,12 @@ static void send_hciCmd(int dev_id, int command_length, char **command)
  */
 static void usage(void)
 {
-	printf("bt_scoapp\n"
-		"Usage:\n");
-	printf("\tbt_scoapp [bd_addr]\n");
+	printf("bt_sco_app\n"
+		"Usage: for bluez based stack\n");
+	printf("\tbt_sco_app [bd_addr]\n");
+	printf("Usage: for blueti based stack\n");
+	printf("\tbt_sco_app [bd_addr] [coding_format]\n");
+        printf("\t[coding format]\n  \t\t 2 - cvsd\n\t\t 5 - mSBC\n\t\t default 2 cvsd\n");
 }
 
 /** Main Function
@@ -271,13 +292,50 @@ int main(int argc ,char *argv[])
 			    };         
 	int command_length = 36; /* Length of the BT configuration commands */
 
+        char *command1[] = {       "0x3f", "0x106",                 /* OCF and OGF */
+                                   "0x00", "0x02",                  /* Bit clock - 512KHz*/
+                                   "0x00",                          /* BT chip as Master*/
+                                   "0x80", "0x3e", "0x00", "0x00",  /* Sampling rate - 16KHz*/
+                                   "0x00", "0x00",                  /* I2S */
+                                   "0x01",                          /* Frame sync at rising edge*/
+                                   "0x01",                          /* FS Active low polarity*/
+                                   "0x00",                          /* FS direction - [Reserved]*/
+                                   "0x10", "0x00",                  /* CH1 16 -bit OUT size*/
+                                   "0x01", "0x00",                  /* One Clock delay */
+                                   "0x01",                          /* Data driven at falling edge*/
+                                   "0x10", "0x00",                  /* CH1 16 -bit IN size */
+                                   "0x01", "0x00",                  /* CH1 DAta IN One Clock delay*/
+                                   "0x00",                          /* Data driven at sampling edge*/
+                                   "0x00",                          /* Reserved bit*/
+                                   "0x10", "0x00",                  /* CH2 16 -bit OUT size*/
+                                   "0x11", "0x00",                  /* CH2 data OUT off set*/
+                                   "0x01",                          /* Data driven at falling edge*/
+                                   "0x10", "0x00",                  /* CH2 16 -bit IN size*/
+                                   "0x11", "0x00",                  /* CH2 data IN off set*/
+                                   "0x00",                          /* Data Sampled at rising edge*/
+                                   "0x00"                           /* Reserved bit*/
+                            };
+
 	/* Check if the number of arguemts mentioned is 2 */
-	if (argc != 2)
+	if (argc < 2)
 	{
-		printf("\n Wrong input - No BD headset address specified");
+		printf("\n Wrong input - No BD headset address specified\n");
 		usage();
 		exit(1);
 	}
+
+        if (argc == 3)
+        {
+                if(!strcmp(argv[2],"2"))
+                      coding_format = CODING_FORMAT_CVSD;
+                else if(!strcmp(argv[2],"5"))
+                      coding_format = CODING_FORMAT_mSBC;
+                else
+                      printf(" selecting deafult as CVSD\n");
+
+                flag =1;
+
+        }
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_flags   = SA_NOCLDSTOP;
@@ -295,7 +353,10 @@ int main(int argc ,char *argv[])
 		exit(1);
 	}
     /* send the BT configuration commands */
-	send_hciCmd(-1,command_length,command);
+        if (flag)
+           send_hciCmd(-1,command_length,command1); // I2S 16k, stereo
+        else
+	   send_hciCmd(-1,command_length,command);  // PCM 8K, mono
 
 	sleep(2); /* wait for some time while BT chip is configured */
 
