@@ -11,7 +11,8 @@ PRODUCT_PACKAGES += uim-sysfs \
         libfmradio \
         fmradioif \
         com.ti.fm.fmradioif.xml \
-	ti-wpan-fw
+	ti-wpan-fw \
+        dun
 
 #NFC
 PRODUCT_PACKAGES += \
@@ -29,5 +30,6 @@ PRODUCT_PACKAGES += \
 
 #copy firmware
     PRODUCT_COPY_FILES += \
-       system/bluetooth/data/main.conf:system/etc/bluetooth/main.conf
+       system/bluetooth/data/main.conf:system/etc/bluetooth/main.conf \
+       external/bluetooth/blueti/dun/dun.conf:system/etc/bluetooth/dun.conf
 
