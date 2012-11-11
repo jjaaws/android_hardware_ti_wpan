@@ -14,6 +14,7 @@ PRODUCT_PACKAGES += uim-sysfs \
 	ti-wpan-fw \
         dun
 
+ifdef BOARD_HAVE_NFC
 #NFC
 PRODUCT_PACKAGES += \
     libnfc \
@@ -27,6 +28,7 @@ PRODUCT_PACKAGES += \
     AndroidBeamDemo \
     NfcExtrasTests \
     com.android.nfc_extras
+endif
 
 #copy firmware
     PRODUCT_COPY_FILES += \
